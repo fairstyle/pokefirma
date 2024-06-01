@@ -15,6 +15,7 @@ namespace CodeIgniter;
 
 use BadMethodCallException;
 use Closure;
+use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\Database\BaseResult;
@@ -27,6 +28,7 @@ use CodeIgniter\Exceptions\ModelException;
 use CodeIgniter\Validation\ValidationInterface;
 use Config\Database;
 use Config\Feature;
+use Config\Services;
 use ReflectionException;
 use stdClass;
 
@@ -136,6 +138,9 @@ class Model extends BaseModel
      */
     protected $escape = [];
 
+    protected bool $isCacheOn;
+    protected CacheInterface $cache;
+    protected int $defaultCacheTTL;
     /**
      * Builder method names that should not be used in the Model.
      *
@@ -936,5 +941,91 @@ class Model extends BaseModel
         if (in_array($name, $this->builderMethodsNotAvailable, true)) {
             throw ModelException::forMethodNotAvailable(static::class, $name . '()');
         }
+    }
+
+
+    /**
+     * getCache
+     *
+     * Retorna información en caso de que el cache esté activado y exista, caso contrario retorna false
+     * @param string $cacheName
+     * @return array|bool|float|int|null|object|string
+     * @author          Andres Villarroel
+     * @version         1.0.0
+     */
+    public function getCache(string $cacheName): array|bool|float|int|null|object|string
+    {
+        if($this->isCacheOn)
+            return $this->cache->get($cacheName);
+
+        return false;
+    }
+
+    /**
+     * saveCache
+     *
+     * Guarda información en caso de que el cache esté activado
+     * @param string $cacheName
+     * @param array|bool|float|int|object|string|null $data
+     * @param int $ttl
+     * @return void
+     * @author          Andres Villarroel
+     * @version         1.0.0
+     */
+    public function saveCache(string $cacheName, array|bool|float|int|null|object|string $data, int $ttl = 200): void
+    {
+        if($this->isCacheOn)
+            $this->cache->save($cacheName, $data, $this->defaultCacheTTL !== $ttl ? $ttl : $this->defaultCacheTTL);
+    }
+
+    /**
+     * setCache
+     *
+     * Cambia el estado del cache
+     * @param bool|null $isCacheOn
+     * @param int $ttl
+     * @return void
+     * @author          Andres Villarroel
+     * @version         1.0.0
+     */
+    public function setCache(bool $isCacheOn = false, int $ttl = 300): void
+    {
+        $this->isCacheOn = $isCacheOn;
+
+        if($this->isCacheOn) {
+            $this->cache = Services::cache();
+            $this->cleanExpiredCache();
+            $this->defaultCacheTTL = $ttl;
+        }
+    }
+
+    /**
+     * cleanExpiredCache
+     *
+     * Busca el cache por expirar
+     * @return void
+     * @author          Andres Villarroel
+     * @version         1.0.0
+     */
+    public function cleanExpiredCache(): void
+    {
+        foreach ($this->cache->getCacheInfo() as $key => $value)
+            if($this->cache->get($key) === NULL && $key !== 'index.html')
+                $this->removeCache($key);
+    }
+
+
+    /**
+     * removeCache
+     *
+     * Elimina el cache entregado
+     * @param string $cacheName
+     * @return void
+     * @author          Andres Villarroel
+     * @version         1.0.0
+     */
+    public function removeCache(string $cacheName): void
+    {
+        $this->cache->delete($cacheName);
     }
 }
