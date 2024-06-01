@@ -58,7 +58,7 @@ abstract class BaseController extends Controller
         // E.g.: $this->session = \Config\Services::session();
 
         // Cargar Pokemones
-        $Pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true);
+        $Pokemon_model = new \App\Models\Load_pokemon_model(null, null, true);
         $Pokemon_model->checkNewPokemon($response);
     }
 }
