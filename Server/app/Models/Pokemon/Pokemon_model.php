@@ -2,7 +2,6 @@
 
 namespace App\Models\Pokemon;
 
-use App\Libraries\FirmaAPI;
 use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Model;
@@ -12,98 +11,122 @@ class Pokemon_model extends Model
 {
     protected $table = 'pokefirma.pokemon';
     protected $primaryKey = 'pokemonId';
-    protected $useAutoIncrement = false;
+    protected $useAutoIncrement = true;
     protected $returnType = \stdClass::class;
     protected $protectFields = false;
+    protected $useTimestamps = true;
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
+    protected $afterFind = ['loadPokemon', 'loadStats', 'loadTypes'];
 
-    public function __construct(?ConnectionInterface $db = null, ?ValidationInterface $validation = null, bool $isCacheOn = false)
+    protected ResponseInterface $response;
+
+    public function __construct(?ConnectionInterface $db = null, ?ValidationInterface $validation = null, bool $isCacheOn = false, ResponseInterface $response = null)
     {
         parent::__construct($db, $validation);
         $this->setCache($isCacheOn);
-    }
 
-    public function getPokemon($pokemonId): \stdClass
-    {
-        return $this
-            ->select("pokemonId")
-            ->select("name")
-            ->select("statsLoaded")
-            ->find($pokemonId);
+        if($response !== null)
+            $this->response = $response;
     }
 
     /**
+     * Recupera el pokemon especificado o todos los pokemones
+     * @param int|null $pokemonId
+     * @return Model|\stdClass|array
+     */
+    public function getPokemon(int|array $pokemonId = null): Model|\stdClass|array
+    {
+        return $pokemonId === null ? $this : (is_array($pokemonId) ? $this->whereIn("pokemonId", $pokemonId) : $this->find($pokemonId));
+    }
+
+
+    /**
+     * Carga la información del pokemon en caso de que no contenga información, este se ejecuta con el evento afterFind, el cual se lanza despues de un first, find o findAll
+     * @param $pokemon
+     * @return array
      * @throws \ReflectionException
      */
-    public function checkNewPokemon(ResponseInterface $response): bool
+    protected function loadPokemon($pokemon): array
     {
-        $firmapi = new FirmaAPI($response);
+        $load_pokemon_model = new \App\Models\Load_pokemon_model();
+        $pokemons_array = array_map(function($eachPokemon) use ($load_pokemon_model) {
 
-        // Recuperamos el conteo de pokemones de la API
-        $temp_request = $firmapi->doRequest("GET", "https://pokeapi.co/api/v2/pokemon/?limit=1");
-        $dbpokemon_newCount = json_decode($temp_request)->count ?? 0;
+            // Verificar si el campo stats del pokemon es diferente a 1 lo que significa que no se han cargado los stats y se deben cargar
+            if($eachPokemon->isLoaded !== "1") {
 
-        $dbpokemon_actualCount = $this->getCache('dbpokemon_actualCount');
-        if($dbpokemon_actualCount === null) {
-            $dbpokemon_actualCount = 0;
+                // se carga toda la información del pokemon
+                $load_pokemon_model->loadPokemon($eachPokemon->pokemonId, $this->response);
 
-            // Guardamos el conteo en cache por 10 año
-            $this->saveCache('dbpokemon_actualCount', $dbpokemon_actualCount, 31557600 * 10);
-        }
+                // Se vuelve a obtener la información misma del pokemon, (ya que la imagen no se carga en un inicio)
+                $eachPokemon = self::getPokemon($eachPokemon->pokemonId);
+            }
 
-        $dbpokemon_newCount = (int)$dbpokemon_newCount;
-        $dbpokemon_actualCount = (int)$dbpokemon_actualCount;
+            return $eachPokemon;
+        }, is_array($pokemon["data"]) ? $pokemon["data"] : [$pokemon["data"]]);
 
-        if($dbpokemon_newCount <= $dbpokemon_actualCount)
-            return false;
+        // Se actualiza la variable que contiene la información del pokemon dependiendo si se hizo un findAll o un find a un pokemon especifico
+        $pokemon["data"] = is_array($pokemon["data"]) ? $pokemons_array : $pokemons_array[0];
 
-        $this->removeCache('dbpokemon_actualCount');
+        return $pokemon;
+    }
+    /**
+     * Carga la información stats del pokemon, este se ejecuta con el evento afterFind, el cual se lanza despues de un first, find o findAll
+     * @param $pokemon
+     * @return array
+     * @throws \ReflectionException
+     */
+    protected function loadStats($pokemon): array
+    {
+        $pokemon_stats_model = new \App\Models\Pokemon\Pokemon_stats_model();
+        $pokemons_array = array_map(function($eachPokemon) use ($pokemon_stats_model) {
 
-        $temp_request = $firmapi->doRequest("GET", "https://pokeapi.co/api/v2/pokemon/?limit={$dbpokemon_newCount}");
-        $db_pokemon_list = json_decode($temp_request);
+            // Se obtienen los stats del pokemon
+            $eachPokemon->stats = $pokemon_stats_model->getPokemonStats($eachPokemon->pokemonId);
 
-        $pokemonIds = $this
-            ->select("pokemonId")
-            ->findAll();
+            return $eachPokemon;
+        }, is_array($pokemon["data"]) ? $pokemon["data"] : [$pokemon["data"]]);
 
-        $pokemonIds = array_column($pokemonIds, 'pokemonId');
+        // Se actualiza la variable que contiene la información del pokemon dependiendo si se hizo un findAll o un find a un pokemon especifico
+        $pokemon["data"] = is_array($pokemon["data"]) ? $pokemons_array : $pokemons_array[0];
 
-        $newPokemon = [];
-        foreach ($db_pokemon_list->results as $pokemon) {
+        return $pokemon;
+    }
 
-            $pokemonId = explode("/", $pokemon->url);
-            $pokemonId = $pokemonId[count($pokemonId) - 2];
+    /**
+     * Carga la información de los types del pokemon, este se ejecuta con el evento afterFind, el cual se lanza despues de un first, find o findAll
+     * @param $pokemon
+     * @return array
+     */
+    protected function loadTypes($pokemon): array
+    {
+        $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
+        $pokemons_array = array_map(function($eachPokemon) use ($pokemon_relation_pokemon_type_model) {
 
-            if(in_array($pokemonId, $pokemonIds))
-                continue;
+            // Se obtienen los types del pokemon
+            $eachPokemon->types = $pokemon_relation_pokemon_type_model->getPokemonTypes($eachPokemon->pokemonId);
 
+            return $eachPokemon;
+        }, is_array($pokemon["data"]) ? $pokemon["data"] : [$pokemon["data"]]);
 
-            $newPokemon[] = [
-                'pokemonId' => $pokemonId,
-                'name' => $pokemon->name
-            ];
-        }
+        // Se actualiza la variable que contiene la información del pokemon dependiendo si se hizo un findAll o un find a un pokemon especifico
+        $pokemon["data"] = is_array($pokemon["data"]) ? $pokemons_array : $pokemons_array[0];
 
-        if(sizeof($newPokemon) > 0)
-            $this->insertBatch($newPokemon);
+        return $pokemon;
+    }
 
-        $this->saveCache('dbpokemon_actualCount', $dbpokemon_newCount, 31557600 * 10);
-
+    /**
+     * Actualiza la información del pokemon que viene el la variable $data
+     * @param array $data
+     * @return bool
+     * @throws \ReflectionException
+     */
+    public function updatePokemonData(array $data = []): bool
+    {
+        // Se actualiza la información del pokemon
+        $this->save($data);
         return true;
     }
 
-    public function loadPokemonStats(ResponseInterface $response, int $pokemonId): bool
-    {
-        $firmapi = new FirmaAPI($response);
 
-        $temp_req = $firmapi->doRequest("GET", "https://pokeapi.co/api/v2/pokemon/{$pokemonId}");
-
-        $temp_req = json_decode($temp_req);
-
-        if($temp_req === null)
-            return false;
-
-        var_dump($temp_req->stats);
-        die();
-        return true;
-    }
 }
