@@ -27,7 +27,7 @@ class CreateTablePokemonStats extends Migration
                 "unsigned" => true,
                 "null" => true
             ],
-            "baseExperience" => [
+            "base_experience" => [
                 "type" => "INT",
                 "constraint" => 11,
                 "null" => true
