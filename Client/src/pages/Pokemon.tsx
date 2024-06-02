@@ -4,7 +4,7 @@ import { PokemonInterface } from '../shared/interfaces/Pokemon.interface';
 
 export const PokemonPage = () => {
     const [pokemon, setPokemon] = useState<PokemonInterface>({});
-    const params= useParams()
+    const params = useParams()
 
     const getPokemon = async () => {
         const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon/${params.id}`);
@@ -16,7 +16,7 @@ export const PokemonPage = () => {
         getPokemon();
     }, [])
 
-    return (<div className='h-auto min-h-screen grid grid-cols-3 px-4 pt-2'>
+    return (<div className='h-auto min-h-screen grid grid-cols-3 px-4 pt-20'>
         <div className=''>1</div>
         <div className='grid grid-rows-2'>
             <div>
