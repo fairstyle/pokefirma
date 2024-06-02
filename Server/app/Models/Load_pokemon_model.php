@@ -172,6 +172,12 @@ class Load_pokemon_model extends Model
                 "height" => $temp_req->height,
                 "weight" => $temp_req->weight,
                 "base_experience" => $temp_req->base_experience,
+                "hp" => $temp_req->stats[0]->base_stat,
+                "attack" => $temp_req->stats[1]->base_stat,
+                "defense" => $temp_req->stats[2]->base_stat,
+                "special_attack" => $temp_req->stats[3]->base_stat,
+                "special_defense" => $temp_req->stats[4]->base_stat,
+                "speed" => $temp_req->stats[5]->base_stat
             ]
         ];
 

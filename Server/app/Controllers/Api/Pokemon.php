@@ -53,4 +53,12 @@ class Pokemon extends BaseController
 
         return $this->firmapi->defaultResponseOk($model->findAll($limit, $offset));
     }
+
+    public function findPokemon(string $pokemonName): ResponseInterface
+    {
+        $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
+        $pokemon = $pokemon_model->findPokemon($pokemonName);
+
+        return $this->firmapi->defaultResponseOk($pokemon);
+    }
 }
