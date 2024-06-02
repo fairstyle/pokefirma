@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.pokemon-img {
+    view-transition-name: 'pokemon-img';
+}
+.normal {
+    @apply bg-[#ADA794] group-hover:bg-[#736F62];
+}
+
+.fighting {
+    @apply bg-[#511F19] group-hover:bg-[#361410];
+}
+
+.flying {
+    @apply bg-[#5D73CE] group-hover:bg-[#3E4E8A];
+}
+
+.poison {
+    @apply bg-[#772F7A] group-hover:bg-[#4F1F50];
+}
+
+.ground {
+    @apply bg-[#A9873D] group-hover:bg-[#705A28];
+}
+
+.rock {
+    @apply bg-[#9C853F] group-hover:bg-[#68582A];
+}
+
+.bug {
+    @apply bg-[#86970F] group-hover:bg-[#5A660A];
+}
+
+.ghost {
+    @apply bg-[#444490] group-hover:bg-[#2E2E61];
+}
+
+.steel {
+    @apply bg-[#8E8E9B] group-hover:bg-[#5E5E66];
+}
+
+.fire {
+    @apply bg-[#C72501] group-hover:bg-[#841800];
+}
+
+.water {
+    @apply bg-[#0B64BA] group-hover:bg-[#07447D];
+}
+
+.grass {
+    @apply bg-[#406F21] group-hover:bg-[#2A4916];
+}
+
+.electric {
+    @apply bg-[#E99305] group-hover:bg-[#9C6203];
+}
+
+.psychic {
+    @apply bg-[#DF326A] group-hover:bg-[#942246];
+}
+
+.ice {
+    @apply bg-[#70D1F4] group-hover:bg-[#4B8BA2];
+}
+
+.dragon {
+    @apply bg-[#6D5ACD] group-hover:bg-[#493C88];
+}
+
+.dark {
+    @apply bg-[#3F2C23] group-hover:bg-[#2A1C16];
+}
+
+.fairy {
+    @apply bg-[#E08EE0] group-hover:bg-[#955F95];
+}
+
+.stellar {
+    @apply bg-[#7E7D82] group-hover:bg-[#545356];
+}
+
+.unknown {
+    @apply bg-[#bbbbbb] group-hover:bg-[#7C7C7C];
+}
