@@ -31,10 +31,9 @@ class Pokemon_stats_model extends Model
      * @param int $pokemonId
      * @return \stdClass|null
      */
-    public function getPokemonStats(int $pokemonId): \stdClass|null
+    public function getPokemonStats(int|null $pokemonId): \stdClass|null|Model
     {
-        return $this
-            ->find($pokemonId);
+        return $pokemonId === null ? $this : $this->find($pokemonId);
     }
 
 

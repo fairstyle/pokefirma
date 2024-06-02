@@ -40,6 +40,10 @@ class Pokemon extends BaseController
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
         $model = $pokemon_model->getPokemon();
 
+        $limit = $this->firmapi->getGet("limit") ?? 20;
+        $offset = $this->firmapi->getGet("offset") ?? 0;
+
+        // Filtro por tipos
         $types = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("types") ?? "")));
         if (is_array($types) && sizeof($types) > 0 && $types[0] !== "") {
             $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
@@ -48,12 +52,37 @@ class Pokemon extends BaseController
             $model = $pokemon_model->getPokemon($pokemon_relation_pokemon_type_model);
         }
 
-        $limit = $this->firmapi->getGet("limit") ?? 20;
-        $offset = $this->firmapi->getGet("offset") ?? 0;
+        // Filtro por orden
+        $orderBy = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("orderby") ?? "")));
+        if (is_array($orderBy) && sizeof($orderBy) > 0) {
+            // Cargar toda la info de los pokemones, no se puede ordenar por estadisticas si no se han cargado.
+            $model->findAll();
+
+            $pokemon_stats_model = new \App\Models\Pokemon\Pokemon_stats_model();
+            $model = $pokemon_stats_model->getPokemonStats(null);
+
+            foreach ($orderBy as $oby) {
+                //orderby=[hp|1,attack|1]
+                $oby = explode("|", $oby);
+
+                if(sizeof($oby) === 2)
+                    $model->orderBy($oby[0], $oby[1] === "1" ? "ASC" : "DESC");
+            }
+
+            $model = $model->findAll($limit, $offset);
+            $modelIds = array_column($model, "pokemonId");
+
+            return $this->firmapi->defaultResponseOk($pokemon_model->getPokemon($modelIds)->findAll());
+        }
 
         return $this->firmapi->defaultResponseOk($model->findAll($limit, $offset));
     }
 
+    /**
+     * Busca un pokemon por su nombre
+     * @param string $pokemonName
+     * @return ResponseInterface
+     */
     public function findPokemon(string $pokemonName): ResponseInterface
     {
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
