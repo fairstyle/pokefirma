@@ -10,7 +10,7 @@ export const PokemonHomePage = () => {
     const [pokemons, setPokemons] = useState(Array<PokemonInterface>)
     const [pokemonsTypes, setPokemonsTypes] = useState(Array<PokemonTypesInterface>)
     const [typeFiltros, setTypeFiltros] = useState(Array<number>)
-    const [orderBy, setOrderBy] = useState([0, 0, 0, 0, 0, 0])
+    const [orderBy, setOrderBy] = useState(Array<string>)
     const [opts, setOpts] = useState(Array<number>)
 
     // Flags
@@ -23,7 +23,7 @@ export const PokemonHomePage = () => {
     const initialized = useRef(false)
 
     const getPokemons = async (opts: Array<number> = [20 , 0]) => {
-        const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon?limit=${opts[0]}&offset=${opts[1]}${flagApplyFiltros ? "&types=["+typeFiltros.join(',')+"]" : ""}${flagApplyOrder ? "&orderBy=["+orderBy.join(',')+"]" : ""}`)
+        const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon?limit=${opts[0]}&offset=${opts[1]}${flagApplyFiltros ? "&types=["+typeFiltros.join(',')+"]" : ""}${flagApplyOrder ? "&orderby=["+orderBy.join(',')+"]" : ""}`)
         const data = await response.json()
 
         // 0 = Limit
@@ -72,17 +72,31 @@ export const PokemonHomePage = () => {
 
     const changeOrder = (e: any) => {
 
-        while(e.target.dataset.orderid === undefined)
+        while(e.target.dataset.ordername === undefined)
             e.target = e.target.parentElement
 
-        if(orderBy[e.target.dataset.orderid] === 0)
-            orderBy[e.target.dataset.orderid] = 1
-        else if(orderBy[e.target.dataset.orderid] === 1)
-            orderBy[e.target.dataset.orderid] = -1
-        else
-            orderBy[e.target.dataset.orderid] = 0
+        let exists:any = orderBy.findIndex((order) => order.includes(e.target.dataset.ordername))
+        if(exists !== -1) {
+            let status = orderBy[exists].split(":")[1]
+            if(status === "-1")
+                orderBy.splice(exists, 1)
+            else
+                orderBy[exists] = e.target.dataset.ordername+":"+(status === "1" ? "-1" : "1")
+        } else
+            orderBy.push(e.target.dataset.ordername+":1")
 
-            setOrderBy([...orderBy])
+        setOrderBy([...orderBy])
+    }
+
+    const getOrderIndex = (id: string, nameOrder: string)  => {
+        const indx = orderBy.findIndex((order) => order.includes(nameOrder))
+        if(indx === -1 && id === "0") 
+            return true
+        
+        if(indx !== -1)
+            return orderBy[indx].split(":")[1] === id
+
+        return false
     }
 
     useEffect(() => {
@@ -90,7 +104,8 @@ export const PokemonHomePage = () => {
     }, [typeFiltros])
 
     useEffect(() => {
-        setFlagApplyOrder(orderBy.reduce((acc, curr) => acc + (curr !== 0 ? 1 : 0), 0) > 0)
+        setFlagApplyOrder(orderBy.length > 0)
+        //setFlagApplyOrder(orderBy.reduce((acc, curr) => acc + (curr !== 0 ? 1 : 0), 0) > 0)
     }, [orderBy])
 
     useEffect(() => {
@@ -107,7 +122,7 @@ export const PokemonHomePage = () => {
         <div className='pt-20 flex justify-end px-4 pb-4 space-x-2'>
             <div className='w-[300px] bg-gray-100 border border-solid border-gray-200 rounded-lg'>
                 <div className='flex justify-between p-2'>
-                    <div className='text-gray-400'>Default</div>
+                    <div className='text-gray-400'>{flagApplyOrder ? "Custom" : "Default" }</div>
                     <div className='cursor-pointer' onClick={alterByOrder}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -116,95 +131,95 @@ export const PokemonHomePage = () => {
                 </div>
                 <div className='relative z-20'>
                     <div className={`${isOpenedByOrder ? "h-[300px]" : "hidden"} absolute bg-gray-200 border-gray-300 border border-solid right-0 w-full duration-300 p-4 space-y-2 [&>div]:p-2 [&>div]:flex [&>div]:justify-between [&>div]:rounded-lg [&>div:hover]:bg-gray-300 [&>div:hover]:cursor-pointer overflow-y-auto`}>
-                        <div onClick={changeOrder} data-orderid="0">
+                        <div onClick={changeOrder} data-ordername="hp">
                             <span>HP</span>
                             <div>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[0] === 0 ? "" : "hidden"} size-6`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "hp") ? "" : "hidden"} size-6`}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                 </svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[0] === 1 ? "" : "hidden"} size-6`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "hp") ? "" : "hidden"} size-6`}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                 </svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[0] === -1 ? "" : "hidden"} size-6`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "hp") ? "" : "hidden"} size-6`}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                 </svg>
                             </div>
                         </div>
-                        <div onClick={changeOrder} data-orderid="1">
+                        <div onClick={changeOrder} data-ordername="attack">
                             <span>Attack</span>
                             <div>
                                 <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[1] === 0 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[1] === 1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[1] === -1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div onClick={changeOrder} data-orderid="2">
+                        <div onClick={changeOrder} data-ordername="defense">
                             <span>Defense</span>
                             <div>
                                 <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[2] === 0 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[2] === 1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[2] === -1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div onClick={changeOrder} data-orderid="3">
+                        <div onClick={changeOrder} data-ordername="speed">
                             <span>Speed</span>
                             <div>
                                 <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[3] === 0 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "speed") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[3] === 1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "speed") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[3] === -1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "speed") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div onClick={changeOrder} data-orderid="4">
+                        <div onClick={changeOrder} data-ordername="special_attack">
                             <span>Special Attack</span>
                             <div>
                                 <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[4] === 0 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "special_attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[4] === 1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "special_attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[4] === -1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "special_attack") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div onClick={changeOrder} data-orderid="5">
+                        <div onClick={changeOrder} data-ordername="special_defense">
                             <span>Special Defense</span>
                             <div>
                                 <div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[5] === 0 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("0", "special_defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[5] === 1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("-1", "special_defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21 21 17.25" />
                                     </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${orderBy[5] === -1 ? "" : "hidden"} size-6`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`${getOrderIndex("1", "special_defense") ? "" : "hidden"} size-6`}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
                                     </svg>
                                 </div>
@@ -215,7 +230,7 @@ export const PokemonHomePage = () => {
             </div>
             <div className='w-[300px] bg-gray-100 border border-solid border-gray-200 rounded-lg'>
                 <div className='flex justify-between p-2'>
-                    <div className='text-gray-400'> {flagApplyFiltros ? "Custom" : "Default" }</div>
+                    <div className='text-gray-400'>{flagApplyFiltros ? "Custom" : "Default" }</div>
                     <div className='cursor-pointer' onClick={alterByType}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
