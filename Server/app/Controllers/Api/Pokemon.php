@@ -62,8 +62,8 @@ class Pokemon extends BaseController
             $model = $pokemon_stats_model->getPokemonStats(null);
 
             foreach ($orderBy as $oby) {
-                //orderby=[hp|1,attack|1]
-                $oby = explode("|", $oby);
+                //orderby=[hp:1,attack:1]
+                $oby = explode(":", $oby);
 
                 if(sizeof($oby) === 2)
                     $model->orderBy($oby[0], $oby[1] === "1" ? "ASC" : "DESC");
@@ -72,7 +72,8 @@ class Pokemon extends BaseController
             $model = $model->findAll($limit, $offset);
             $modelIds = array_column($model, "pokemonId");
 
-            return $this->firmapi->defaultResponseOk($pokemon_model->getPokemon($modelIds)->findAll());
+            $implodeIds = implode(",", $modelIds);
+            return $this->firmapi->defaultResponseOk($pokemon_model->getPokemon($modelIds)->orderBy("find_in_set(pokemonId, '${$implodeIds}')", 'ASC', false)->findAll());
         }
 
         return $this->firmapi->defaultResponseOk($model->findAll($limit, $offset));
