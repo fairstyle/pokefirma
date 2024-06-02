@@ -40,6 +40,10 @@ class Pokemon_model extends Model
         return $pokemonId === null ? $this : (is_array($pokemonId) ? $this->whereIn("pokemonId", $pokemonId) : $this->find($pokemonId));
     }
 
+    public function findPokemon(string $pokemonName): array
+    {
+        return $this->like("name", strtolower($pokemonName))->findAll();
+    }
 
     /**
      * Carga la información del pokemon en caso de que no contenga información, este se ejecuta con el evento afterFind, el cual se lanza despues de un first, find o findAll
@@ -49,6 +53,9 @@ class Pokemon_model extends Model
      */
     protected function loadPokemon($pokemon): array
     {
+        if($pokemon["data"] === null)
+            return $pokemon;
+
         $load_pokemon_model = new \App\Models\Load_pokemon_model();
         $pokemons_array = array_map(function($eachPokemon) use ($load_pokemon_model) {
 
@@ -78,6 +85,9 @@ class Pokemon_model extends Model
      */
     protected function loadStats($pokemon): array
     {
+        if($pokemon["data"] === null)
+            return $pokemon;
+
         $pokemon_stats_model = new \App\Models\Pokemon\Pokemon_stats_model();
         $pokemons_array = array_map(function($eachPokemon) use ($pokemon_stats_model) {
 
@@ -100,6 +110,9 @@ class Pokemon_model extends Model
      */
     protected function loadTypes($pokemon): array
     {
+        if($pokemon["data"] === null)
+            return $pokemon;
+
         $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
         $pokemons_array = array_map(function($eachPokemon) use ($pokemon_relation_pokemon_type_model) {
 
