@@ -44,8 +44,11 @@ class Pokemon extends BaseController
         $offset = $this->firmapi->getGet("offset") ?? 0;
 
         // Filtro por tipos
+        $orderBy = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("orderby") ?? "")));
         $types = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("types") ?? "")));
-        if (is_array($types) && sizeof($types) > 0 && $types[0] !== "") {
+
+
+        if (is_array($types) && sizeof($types) > 0 && $types[0] !== "" && $orderBy[0] === "") {
             $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
             $pokemon_relation_pokemon_type_model = $pokemon_relation_pokemon_type_model->getPokemonTypesByPokemonTypeId($types);
             $pokemon_relation_pokemon_type_model = array_column($pokemon_relation_pokemon_type_model, "pokemonId");
@@ -53,8 +56,7 @@ class Pokemon extends BaseController
         }
 
         // Filtro por orden
-        $orderBy = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("orderby") ?? "")));
-        if (is_array($orderBy) && sizeof($orderBy) > 0) {
+        if (is_array($orderBy) && $orderBy[0] !== "") {
             // Cargar toda la info de los pokemones, no se puede ordenar por estadisticas si no se han cargado.
             $model->findAll();
 
@@ -69,11 +71,16 @@ class Pokemon extends BaseController
                     $model->orderBy($oby[0], $oby[1] === "1" ? "ASC" : "DESC");
             }
 
+            if(sizeof($types) > 0 && $types[0] !== "")
+                $model = $model
+                    ->join("pokemon_relation_pokemon_type", "pokemon_relation_pokemon_type.pokemonId = pokemon_stats.pokemonId", "right")
+                    ->whereIn("pokemon_relation_pokemon_type.pokemonTypeId", $types);
+
             $model = $model->findAll($limit, $offset);
             $modelIds = array_column($model, "pokemonId");
 
             $implodeIds = implode(",", $modelIds);
-            return $this->firmapi->defaultResponseOk($pokemon_model->getPokemon($modelIds)->orderBy("find_in_set(pokemonId, '${$implodeIds}')", 'ASC', false)->findAll());
+            return $this->firmapi->defaultResponseOk($pokemon_model->getPokemon($modelIds)->orderBy("find_in_set(pokemonId, '{$implodeIds}')", 'ASC', false)->findAll());
         }
 
         return $this->firmapi->defaultResponseOk($model->findAll($limit, $offset));
