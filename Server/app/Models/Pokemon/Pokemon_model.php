@@ -17,7 +17,7 @@ class Pokemon_model extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-    protected $afterFind = ['loadPokemon', 'loadStats', 'loadTypes', 'loadAbilities', 'loadEvolutions'];
+    protected $afterFind = ['loadPokemon', 'loadStats', 'loadTypes', 'loadAbilities', 'loadEvolutions', 'loadMoves'];
 
     protected ResponseInterface $response;
 
@@ -203,6 +203,31 @@ class Pokemon_model extends Model
 
             // Se obtienen los types del pokemon
             $eachPokemon->evolutions = $pokemon_relation_pokemon_evolution_model->getPokemonEvolution($eachPokemon->pokemonId);
+
+            return $eachPokemon;
+        }, is_array($pokemon["data"]) ? $pokemon["data"] : [$pokemon["data"]]);
+
+        // Se actualiza la variable que contiene la información del pokemon dependiendo si se hizo un findAll o un find a un pokemon especifico
+        $pokemon["data"] = is_array($pokemon["data"]) ? $pokemons_array : $pokemons_array[0];
+
+        return $pokemon;
+    }
+
+    /**
+     * Carga la información de los moviemintos del pokemon, este se ejecuta con el evento afterFind, el cual se lanza despues de un first, find o findAll
+     * @param $pokemon
+     * @return array
+     */
+    protected function loadMoves($pokemon): array
+    {
+        if($pokemon["data"] === null)
+            return $pokemon;
+
+        $pokemon_relation_pokemon_move_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_move_model(null, null, false, $this->response);
+        $pokemons_array = array_map(function($eachPokemon) use ($pokemon_relation_pokemon_move_model) {
+
+            // Se obtienen los types del pokemon
+            $eachPokemon->moves = $pokemon_relation_pokemon_move_model->getPokemonMoves($eachPokemon->pokemonId);
 
             return $eachPokemon;
         }, is_array($pokemon["data"]) ? $pokemon["data"] : [$pokemon["data"]]);
