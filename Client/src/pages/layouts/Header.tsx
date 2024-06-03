@@ -15,6 +15,7 @@ export const HeaderPage = () => {
     }
     
     const findPokemon = async (name: string) => {
+        name = name.toLowerCase().replaceAll(" ", "-")
         const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon/${name}`)
         const data = await response.json()
 
@@ -31,6 +32,8 @@ export const HeaderPage = () => {
             setAlterLoadingSearch(true)
             setAlterSearch(true)
             findPokemon(stringSearch)
+        } else {
+            setAlterSearch(false)
         }
 
     }, [stringSearch])
@@ -58,16 +61,16 @@ export const HeaderPage = () => {
                                 </div> : 
                                 <div className='overflow-y-auto max-h-[500px]'>
                                     <ul className='[&>li]:p-2 [&>li:hover]:bg-gray-200'>
-                                        {pokemonsSearch.map((pokemon: PokemonInterface) => <li key={`pokemonsearch_${pokemon.pokemonId}`} className='flex justify-between items-center'>
+                                        {pokemonsSearch.map((pokemon: PokemonInterface) => <li key={`pokemonsearch_${pokemon.pokemonId}`} className='group flex justify-between items-center'>
                                             <a href={`/pokemon/${pokemon.pokemonId}`} className='flex space-x-2 w-full items-center'>
                                                 <img 
                                                 src={pokemon.image}
                                                 alt={pokemon.name}
                                                 width={35}
                                                 height={35}
-                                                className='rounded-full bg-gray-300' />
+                                                className='rounded-full bg-gray-300 group-hover:scale-[120%] duration-300' />
                                                 <div>
-                                                    <span className='text-gray-500'>{pokemon.name}</span>
+                                                    <span className='text-gray-500 capitalize'>{pokemon.name.replaceAll("-", " ")}</span>
                                                     <div className='text-sm space-x-1 pt-0.5'>
                                                         {
                                                             pokemon.types.map((type, index) => <span key={`search_${pokemon.pokemonId}_${index}`} className={`${type.name} rounded-lg px-1 py-0.5 text-white`}>{type.name}</span>)

@@ -12,6 +12,7 @@ export const PokemonHomePage = () => {
     const [typeFiltros, setTypeFiltros] = useState(Array<number>)
     const [orderBy, setOrderBy] = useState(Array<string>)
     const [opts, setOpts] = useState(Array<number>)
+    const [pokemonCount, setPokemonCount] = useState(0)
 
     // Flags
     const [flagApplyFiltros, setFlagApplyFiltros] = useState(false)
@@ -38,6 +39,13 @@ export const PokemonHomePage = () => {
         const data = await response.json()
 
         setPokemonsTypes(data.code === 200 ? data.data : [])
+    }
+
+    const getPokemonsCount = async () => {
+        const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon_count`)
+        const data = await response.json()
+
+        setPokemonCount(data.code === 200 ? data.data : 0)
     }
     
     const applyFiltros = async () => {
@@ -99,13 +107,17 @@ export const PokemonHomePage = () => {
         return false
     }
 
+    const disableFlags = () => {
+        setByType(false)
+        setByOrder(false)
+    }
+
     useEffect(() => {
         setFlagApplyFiltros(typeFiltros.length > 0)
     }, [typeFiltros])
 
     useEffect(() => {
         setFlagApplyOrder(orderBy.length > 0)
-        //setFlagApplyOrder(orderBy.reduce((acc, curr) => acc + (curr !== 0 ? 1 : 0), 0) > 0)
     }, [orderBy])
 
     useEffect(() => {
@@ -113,6 +125,7 @@ export const PokemonHomePage = () => {
             initialized.current = true
             getPokemons()
             getPokemonTypes()
+            getPokemonsCount()
         }
     }, [])
 
@@ -254,11 +267,11 @@ export const PokemonHomePage = () => {
         </div>
         {
             pokemons.length > 0  ? (
-                <div className='h-auto min-h-screen px-4 pb-4 space-y-4'>
+                <div onClick={disableFlags} className='h-auto min-h-screen px-4 pb-4 space-y-4'>
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2'>
                         {pokemons.map((pokemon:any) => <PokemonCardComponent pokemon={pokemon} key={`pokemon_${pokemon.pokemonId}`}></PokemonCardComponent>)}
                     </div>
-                    <div className='text-md text-center text-gray-300 w-full'>----------------------- Total Pokemones cargados en la vista: {pokemons.length} de muchos -----------------------</div>
+                    <div className='text-md text-center text-gray-300 w-full'>----------------------- Total Pokemones cargados en la vista: {pokemons.length} de {pokemonCount} -----------------------</div>
                     <div className='grid justify-items-center space-y-4 text-center'>
                         <div className={`${isLoading ? "" : "hidden"}`}>
                             <div>
@@ -268,7 +281,7 @@ export const PokemonHomePage = () => {
                                     color="gray" 
                                 ></l-grid>
                             </div>
-                            <span className='font-md text-gray-400'>Cargando más pokemones......</span>
+                            <span className='font-md text-gray-400'>Cargando más pokemones...... recuerda que las cargas iniciales demoran un poco</span>
                         </div>
                         <button onClick={loadMorePokemons} className='cursor-pointer p-2 rounded-lg bg-blue-300 hover:bg-blue-400 text-white hover:scale-[110%] active:scale-[95%] font-bold duration-300'>Cargar más</button>
                     </div>

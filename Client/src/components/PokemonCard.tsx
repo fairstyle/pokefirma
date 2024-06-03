@@ -1,5 +1,6 @@
 import { PokemonInterface } from "../shared/interfaces/Pokemon.interface"
 import { AnimatedLink } from "./AnimatedLink"
+import { PokemonBasicStatsComponent } from "./PokemonBasicStats"
 
 export const PokemonCardComponent = (pokemon: any) => {
     const unipokemon: PokemonInterface = pokemon.pokemon
@@ -20,7 +21,7 @@ export const PokemonCardComponent = (pokemon: any) => {
                 <div>
                     <div className="flex flex-col space-y-2">
                     <div className="flex space-x-2">
-                            <span className="font-bold capitalize italic">~ {unipokemon.name} ~</span>
+                            <span className="font-bold capitalize italic">~ {unipokemon.name.replaceAll("-", " ")} ~</span>
                         </div>
                         <div className="flex space-x-2 text-sm text-gray-600">
                             <span className="font-bold">Altura:</span>
@@ -41,32 +42,7 @@ export const PokemonCardComponent = (pokemon: any) => {
                         </div>
                     </div>
                 </div>
-                <div className="pt-2 col-span-2 grid grid-cols-3 w-full text-center [&>div]:duration-300 [&>div]:grid [&>div]:border-solid [&>div]:border-gray-200 [&>div>span:nth-child(2)]:text-gray-400 [&>div>span:nth-child(2)]:text-sm [&>div>span:nth-child(1)]:text-gray600 [&>div>span:nth-child(1)]:text-md">
-                    <div className="hover:bg-green-100 rounded-tl-lg">
-                        <span>{unipokemon.stats.hp}</span>
-                        <span>HP</span>
-                    </div>
-                    <div className="border-x hover:bg-red-100">
-                        <span>{unipokemon.stats.attack}</span>
-                        <span>Attack</span>
-                    </div>
-                    <div className="hover:bg-amber-100 rounded-tr-lg">
-                        <span>{unipokemon.stats.defense}</span>
-                        <span>Defense</span>
-                    </div>
-                    <div className="border-t hover:bg-purple-100 rounded-bl-lg">
-                        <span>{unipokemon.stats.speed}</span>
-                        <span>Speed</span>
-                    </div>
-                    <div className="border-x hover:bg-red-100">
-                        <span>{unipokemon.stats.special_attack}</span>
-                        <span>Special Attack</span>
-                    </div>
-                    <div className="border-t hover:bg-orange-100 rounded-br-lg">
-                        <span>{unipokemon.stats.special_defense}</span>
-                        <span>Special Defense</span>
-                    </div>
-                </div>
+                <PokemonBasicStatsComponent pokemon={unipokemon}/>
             </div>
         </div>
     </AnimatedLink>)
