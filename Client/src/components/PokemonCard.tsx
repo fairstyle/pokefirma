@@ -1,6 +1,7 @@
 import { PokemonInterface } from "../shared/interfaces/Pokemon.interface"
 import { AnimatedLink } from "./AnimatedLink"
 import { PokemonBasicStatsComponent } from "./PokemonBasicStats"
+import { PokemonImageComponent } from "./PokemonImage"
 
 export const PokemonCardComponent = (pokemon: any) => {
     const unipokemon: PokemonInterface = pokemon.pokemon
@@ -10,13 +11,7 @@ export const PokemonCardComponent = (pokemon: any) => {
             <span className="text-xl text-gray-300 absolute left-2 top-2">{unipokemon.pokemonId}°</span>
             <div className="grid grid-cols-2 w-full py-2 pl-4">
                 <div>
-                    <img
-                        src={unipokemon.image}
-                        alt={`Pokemon ${unipokemon.name}`}  
-                        width={150}
-                        height={150}
-                        className="bg-gray-100 pokemon-img group-hover:bg-gray-200 duration-300 group-hover:scale-[110%] rounded-full"  
-                    />
+                    <PokemonImageComponent src={unipokemon.image} alt={`Pokemon ${unipokemon.name}`} width={150} height={150} classNames={`bg-gray-100 pokemon-img group-hover:bg-gray-200 duration-300 group-hover:scale-[110%] rounded-full`}/>
                 </div>
                 <div>
                     <div className="flex flex-col space-y-2">

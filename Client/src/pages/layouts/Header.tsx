@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { PokemonInterface } from '../../shared/interfaces/Pokemon.interface'
+import { PokemonImageComponent } from '../../components/PokemonImage'
 import { grid } from 'ldrs'
 
 export const HeaderPage = () => {
@@ -35,8 +36,9 @@ export const HeaderPage = () => {
         } else {
             setAlterSearch(false)
         }
-
     }, [stringSearch])
+
+    grid.register()
 
     return (<header className="bg-gray-100 px-4 py-2 drop-shadow-md fixed w-full z-30">
         <div className="flex justify-between">
@@ -63,12 +65,13 @@ export const HeaderPage = () => {
                                     <ul className='[&>li]:p-2 [&>li:hover]:bg-gray-200'>
                                         {pokemonsSearch.map((pokemon: PokemonInterface) => <li key={`pokemonsearch_${pokemon.pokemonId}`} className='group flex justify-between items-center'>
                                             <a href={`/pokemon/${pokemon.pokemonId}`} className='flex space-x-2 w-full items-center'>
-                                                <img 
-                                                src={pokemon.image}
-                                                alt={pokemon.name}
-                                                width={35}
-                                                height={35}
-                                                className='rounded-full bg-gray-300 group-hover:scale-[120%] duration-300' />
+                                                <PokemonImageComponent 
+                                                    src={pokemon.image} 
+                                                    alt={`Pokemon ${pokemon.name}`} 
+                                                    width={35} 
+                                                    height={35} 
+                                                    classNames={`rounded-full bg-gray-300 group-hover:scale-[120%] duration-300`}/>
+                                                    
                                                 <div>
                                                     <span className='text-gray-500 capitalize'>{pokemon.name.replaceAll("-", " ")}</span>
                                                     <div className='text-sm space-x-1 pt-0.5'>

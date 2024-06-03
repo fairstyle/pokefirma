@@ -1,6 +1,6 @@
+import { PokemonImageComponent } from "./PokemonImage";
+
 export const PokemonLeftInfoComponent = ({ pokemon }) => {
-    
-    console.log("aaa", pokemon)
     return (<div>
         <div className='space-y-2'>
             <div className='grid place-content-center col-span-2 lg:col-span-1'>
@@ -13,12 +13,11 @@ export const PokemonLeftInfoComponent = ({ pokemon }) => {
                                 </svg>
                                 <div className='flex space-x-2 items-center'>
                                     <div>
-                                        <img 
-                                        src={pokemon.back.image} 
-                                        alt={pokemon.back.name} 
-                                        width={30}
-                                        height={30}
-                                        />
+                                        <PokemonImageComponent 
+                                            src={pokemon.back.image} 
+                                            alt={`Pokemon ${pokemon.back.name}`}
+                                            width={30} 
+                                            height={30}/>
                                     </div>
                                     <div className='grid'>
                                         <span className='text-md text-gray-500'>{pokemon.back.name}</span>
@@ -37,12 +36,11 @@ export const PokemonLeftInfoComponent = ({ pokemon }) => {
                                         <span className='text-sm italic text-gray-400'>#{pokemon.next.pokemonId}</span>
                                     </div>
                                     <div>
-                                        <img 
-                                        src={pokemon.next.image} 
-                                        alt=""
-                                        width={30}
-                                        height={30}
-                                        />
+                                        <PokemonImageComponent 
+                                            src={pokemon.next.image} 
+                                            alt={`Pokemon ${pokemon.next.name}`}
+                                            width={30} 
+                                            height={30}/>
                                     </div>
                                 </div>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -75,11 +73,11 @@ export const PokemonLeftInfoComponent = ({ pokemon }) => {
                             </div>
                             </div> : <div></div>}
                         <a href={`/pokemon/${evolution.pokemonId}`}><div key={index} className="w-[150px] h-[150px] min-w-[150px] justify-items-center bg-gray-200 hover:bg-gray-300 rounded-lg p-2 grid text-center justify-center duration-300">
-                            <img 
-                            src={evolution.image} 
-                            alt={evolution.name}
-                            width={80}
-                            height={80} />
+                            <PokemonImageComponent 
+                                src={evolution.image} 
+                                alt={`Pokemon ${evolution.name}`}
+                                width={80} 
+                                height={80}/>
                             <span className="text-md text-gray-500">{evolution.name}</span>
                             <span className="text-sm text-gray-400">#{evolution.pokemonId}</span>
                         </div></a></div>)
