@@ -294,7 +294,7 @@ export const PokemonHomePage = () => {
                             color="gray" 
                         ></l-grid>
                     </div>
-                    <span>Cargando más pokemones</span>
+                    <span className='font-md text-gray-400'>Cargando más pokemones...... recuerda que las cargas iniciales demoran un poco</span>
                 </div>)
         }
     </>)

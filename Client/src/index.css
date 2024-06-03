@@ -116,3 +116,27 @@
         background-position: 100% 0;
     }
 }
+
+.ml_tutor {
+    width: 24px;
+    height: 24px;
+    content:url(../public/assets/img/tutor.gif);
+}
+
+.ml_machine {
+    width: 24px;
+    height: 24px;
+    content:url(../public/assets/img/machine.gif);
+}
+
+.ml_egg {
+    width: 24px;
+    height: 24px;
+    content:url(../public/assets/img/egg.gif);
+}
+
+.ml_levelup {
+    width: 24px;
+    height: 24px;
+    content:url(../public/assets/img/lvlup.png);
+}
