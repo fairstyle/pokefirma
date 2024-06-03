@@ -34,6 +34,11 @@ class Pokemon extends BaseController
         return $this->firmapi->defaultResponseOk($pokemon);
     }
 
+
+    /**
+     * Recupera la cantidad de pokemones
+     * @return ResponseInterface
+     */
     public function getCountPokemons(): ResponseInterface
     {
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
@@ -57,7 +62,6 @@ class Pokemon extends BaseController
         // Filtro por tipos
         $orderBy = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("orderby") ?? "")));
         $types = explode(",", str_replace(array("[", "]"), "", trim($this->firmapi->getGet("types") ?? "")));
-
 
         if (is_array($types) && sizeof($types) > 0 && $types[0] !== "" && $orderBy[0] === "") {
             $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
