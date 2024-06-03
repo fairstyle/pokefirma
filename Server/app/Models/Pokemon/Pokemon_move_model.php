@@ -2,21 +2,23 @@
 
 namespace App\Models\Pokemon;
 
-use App\Libraries\FirmaAPI;
 use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Model;
 use CodeIgniter\Validation\ValidationInterface;
 
-class Pokemon_relation_pokemon_ability_model extends Model
+class Pokemon_move_model extends Model
 {
-    protected $table = 'pokefirma.pokemon_relation_pokemon_ability';
-
+    protected $table = 'pokefirma.pokemon_move';
+    protected $primaryKey = 'pokemonMoveId';
+    protected $useAutoIncrement = true;
     protected $returnType = \stdClass::class;
     protected $protectFields = false;
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+
+    protected ResponseInterface $response;
 
     public function __construct(?ConnectionInterface $db = null, ?ValidationInterface $validation = null, bool $isCacheOn = false)
     {
@@ -25,29 +27,23 @@ class Pokemon_relation_pokemon_ability_model extends Model
     }
 
     /**
-     * Recupera las abilities de un pokemon
-     * @param int $pokemonId
+     * Recupera todos los movimientos de pokemones
      * @return array
      */
-    public function getPokemonAbilities(int $pokemonId): array
+    public function getPokemonMoves(): array
     {
         return $this
-            ->select("pokefirma.pokemon_ability.pokemonAbilityId, name, isHidden")
-            ->join("pokefirma.pokemon_ability", "pokefirma.pokemon_ability.pokemonAbilityId = pokefirma.pokemon_relation_pokemon_ability.pokemonAbilityId")
-            ->where("pokemonId", $pokemonId)
             ->findAll();
     }
 
     /**
-     * Inserta las abilities de un pokemon
-     * @param int $pokemonId
+     * Inserta un nuevo movimiento de pokemon
      * @param array $data
      * @return bool
      * @throws \ReflectionException
      */
-    public function updatePokemonAbilities(int $pokemonId, array $data): bool
+    public function insertPokemonMoves(array $data): bool
     {
-        $this->where("pokemonId", $pokemonId)->delete();
         return $this->insertBatch($data);
     }
 }

@@ -97,6 +97,8 @@ class Load_pokemon_model extends Model
             $this->insertBatch($newPokemon);
             self::loadPokemonTypes($firmapi);
             self::loadPokemonAbility($firmapi);
+            self::loadPokemonMoves($firmapi);
+            self::loadPokemonLearnMethod($firmapi);
         }
 
         // Guardamos el nuevo conteo de pokemones en cache por 10 años xd
@@ -180,6 +182,81 @@ class Load_pokemon_model extends Model
             $pokemon_ability_model->insertPokemonAbility($newPokemonAbilities);
     }
 
+
+    /**
+     * Carga los movimientos de un pokemon en caso de que no existan en la base de datos y si existen los actualiza
+     * @param FirmaAPI $firmapi
+     * @return void
+     * @throws ReflectionException
+     */
+    public function loadPokemonMoves(FirmaAPI $firmapi): void
+    {
+        $temp_request = $firmapi->doRequest("GET", getenv("POKEAPI_URL") . "/move?limit=10000");
+        $dbpokemonmoves = json_decode($temp_request);
+
+        $pokemon_move_model = new \App\Models\Pokemon\Pokemon_move_model();
+        $pokemon_move_data = $pokemon_move_model->getPokemonMoves();
+
+        $pokemonMoveId = array_column($pokemon_move_data, 'pokemonMoveId');
+        $newPokemonMoves = [];
+
+        foreach ($dbpokemonmoves->results as $dbpokemonmove) {
+
+            $newmoveId = explode("/", $dbpokemonmove->url);
+            $newmoveId = $newmoveId[count($newmoveId) - 2];
+
+            // Si la habilidad ya existe en la base de datos, se omite
+            if(in_array($newmoveId, $pokemonMoveId))
+                continue;
+
+            $newPokemonMoves[] = [
+                "pokemonMoveId" => $newmoveId,
+                "name" => $dbpokemonmove->name
+            ];
+        }
+
+        // Si existen nuevos tipos de habilidades, se insertan en la base de datos
+        if(sizeof($newPokemonMoves) > 0)
+            $pokemon_move_model->insertPokemonMoves($newPokemonMoves);
+    }
+
+    /**
+     * Carga los movimientos de un pokemon en caso de que no existan en la base de datos y si existen los actualiza
+     * @param FirmaAPI $firmapi
+     * @return void
+     * @throws ReflectionException
+     */
+    public function loadPokemonLearnMethod(FirmaAPI $firmapi): void
+    {
+        $temp_request = $firmapi->doRequest("GET", getenv("POKEAPI_URL") . "/move-learn-method?limit=10000");
+        $dbpokemonlearnmethod = json_decode($temp_request);
+
+        $pokemon_learnmethod_model = new \App\Models\Pokemon\Pokemon_learnmethod_model();
+        $pokemon_learnmethod_data = $pokemon_learnmethod_model->getPokemonLearnMethods();
+
+        $pokemonlLearnMethodId = array_column($pokemon_learnmethod_data, 'pokemonMoveId');
+        $newPokemonLearnMethod= [];
+
+        foreach ($dbpokemonlearnmethod->results as $dbpokemonlearnmethod) {
+
+            $newlearnmethodId = explode("/", $dbpokemonlearnmethod->url);
+            $newlearnmethodId = $newlearnmethodId[count($newlearnmethodId) - 2];
+
+            // Si la habilidad ya existe en la base de datos, se omite
+            if(in_array($newlearnmethodId, $pokemonlLearnMethodId))
+                continue;
+
+            $newPokemonLearnMethod[] = [
+                "pokemonLearnMethodId" => $newlearnmethodId,
+                "name" => $dbpokemonlearnmethod->name
+            ];
+        }
+
+        // Si existen nuevos tipos de habilidades, se insertan en la base de datos
+        if(sizeof($newPokemonLearnMethod) > 0)
+            $pokemon_learnmethod_model->insertPokemonLearnMethods($newPokemonLearnMethod);
+    }
+
     /**
      * Carga los stats de un pokemon en caso de que no existan en la base de datos y si existen los actualiza
      * @param int $pokemonId
@@ -238,6 +315,33 @@ class Load_pokemon_model extends Model
             ];
         }, $temp_req->abilities);
 
+        $data_pokemon_moves = array_map(function($moves) use($pokemonId) {
+            $newPokemonMovesId = explode("/", $moves->move->url);
+            $newPokemonMovesId = $newPokemonMovesId[count($newPokemonMovesId) - 2];
+            return [
+                "pokemonId" => $pokemonId,
+                "pokemonMoveId" => $newPokemonMovesId,
+                "data" => $moves->version_group_details
+            ];
+        }, $temp_req->moves);
+
+        $data_pokemon_moves = array_map(function ($move) {
+            return array_map(function ($version_group) use ($move) {
+                $methodLearnedId = explode("/", $version_group->move_learn_method->url);
+                $methodLearnedId = $methodLearnedId[count($methodLearnedId) - 2];
+
+                $versionId = explode("/", $version_group->version_group->url);
+                $versionId = $versionId[count($versionId) - 2];
+
+                unset($move["data"]);
+                return [...$move, ...[
+                    "level_learned_at" => $version_group->level_learned_at,
+                    "method_learned" => $methodLearnedId,
+                    "version" => $versionId,
+                ]];
+            }, $move["data"]);
+        }, $data_pokemon_moves);
+
         // Actualiza los datos del pokemon en la tabla de pokemons
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model();
         $pokemon_model->updatePokemonData($data_pokemon);
@@ -258,7 +362,6 @@ class Load_pokemon_model extends Model
         $temp_req = $firmapi->doRequest("GET", getenv("POKEAPI_URL")."/pokemon-species/{$pokemonId}");
         $temp_req = json_decode($temp_req);
 
-
         // en caso de que el pokemon no exista en la api o este malo el json no carga nada
         if($temp_req !== null) {
             $temp_req_in = $firmapi->doRequest("GET", $temp_req->evolution_chain->url);
@@ -273,9 +376,25 @@ class Load_pokemon_model extends Model
             }
         }
 
+        // Cargar movimientos de los pokemones
+        $pksMoves = [];
+        foreach ($data_pokemon_moves as $pokemon_move)
+            foreach ($pokemon_move as $pokemon_mo)
+                $pksMoves[] = $pokemon_mo;
+
+        if (sizeof($pksMoves) > 0) {
+            $pokemon_relation_pokemon_move_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_move_model();
+            $pokemon_relation_pokemon_move_model->updatePokemonMoves($pokemonId, $pksMoves);
+        }
+
         return true;
     }
 
+    /**
+     * @param int $pokemonId
+     * @param $chain
+     * @return array
+     */
     protected function getEvolutions(int $pokemonId, $chain): array
     {
         $evolutions = [];

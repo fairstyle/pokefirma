@@ -84,6 +84,37 @@ export const PokemonLeftInfoComponent = ({ pokemon }) => {
                     )}
                 </div>
             </div>
+            <div className='col-span-2 border border-solid border-gray-200 px-8 rounded-lg drop-shadow-sm hover:bg-gray-100 cursor-cell py-2 duration-300'>
+                <h2 className='text-xl font-bold text-center'> -- Movimientos --</h2>
+                <div className="space-x-2 border-t boder-solid border-gray-200 py-2 relative">
+                    <div className="max-h-[500px] overflow-y-auto space-y-2">
+                        <div className="p-2 bg-gray-50 hover:bg-gray-200 flex justify-between group items-center absolute w-full">
+                            <div className="font-bold text-xl">NOMBRE</div>
+                            <div className="flex space-x-2 [&>*]:text-[10px] [&>*]:text-white [&>*]:font-black [&>*]:py-2 [&>*]:px-4 [&>*]:rounded-lg">
+                                <div className="bg-gray-500 group-hover:bg-gray-600">Version</div>
+                                <div className="bg-yellow-500 group-hover:bg-yellow-600">Metodo</div>
+                                <div className="bg-blue-500 group-hover:bg-blue-600">Nivel</div>
+                            </div>
+                        </div>
+                        <div className="pt-10">
+                            { pokemon.moves && pokemon.moves.map((move, index) => {
+                                let methodLearned = Object.keys(move).filter((key) => {
+                                    return key.startsWith("ml_") && move[key] > 0;
+                                });
+                                return(<div key={index} className="p-2 bg-gray-50 hover:bg-gray-200 flex justify-between group items-center">
+                                    <div className="capitalize italic">{move.name.replaceAll("-", "")}</div>
+                                    <div className="flex space-x-2 [&>*]:text-white [&>*]:font-black [&>*]:py-2 [&>*]:px-4 [&>*]:rounded-lg">
+                                        <div className="bg-gray-500 group-hover:bg-gray-600">{move.version}</div>
+                                        <div className="bg-yellow-500 group-hover:bg-yellow-600g">
+                                        <div title={methodLearned[0]} className={methodLearned[0]}/></div>
+                                        <div className="bg-blue-500 group-hover:bg-blue-600">{move.level_learned_at}</div>
+                                    </div>
+                                </div>
+                            )})}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>)
 };

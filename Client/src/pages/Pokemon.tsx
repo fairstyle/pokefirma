@@ -19,7 +19,6 @@ export const PokemonPage = () => {
         getPokemon();
     }, [])
     
-    console.log(pokemon)
     return (<div className='min-h-screen grid grid-cols-1 xl:grid-cols-2 px-4 pt-20 gap-x-4 gap-y-2 py-2'>
         <div className='hidden lg:block'><PokemonLeftInfoComponent pokemon={pokemon}/></div>
         <div className='grid grid-rows-2 border-x border-solid border-gray-200'>
