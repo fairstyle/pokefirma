@@ -4,6 +4,13 @@ Prueba tecnica para postular a desarrollador fullstack en firmavirtual.legal
 # Client Side
 React Framework y React DOM + Vite
 
+### Requisitos para levantar el cliente:
+- Nodejs > 20
+
+### Pasos para levantar el cliente
+1) ir a la carpeta del cliente, renombrar el archivo env a .env y verificar que todo este correcto, la url y el puerto del servidor.
+3) ejecutar el la terminal `npm i && npm run dev` . 
+
 # Server Side
 PHP Codeigniter 4.5 [https://codeigniter.com] 
 
@@ -23,9 +30,14 @@ PHP Codeigniter 4.5 [https://codeigniter.com]
 
 <img src="Server/public/main.png">
 
-### Requisitos para levantar el cliente:
-- Nodejs > 20
+# Preguntas y respuestas
+#### 1) No me cargan los pokemones
+- Borrar la carpeta cache del servidor writable/cache, todo lo que este aqui y reiniciar la base de datos
 
-### Pasos para levantar el cliente
-1) ir a la carpeta del cliente, renombrar el archivo env a .env y verificar que todo este correcto, la url y el puerto del servidor.
-3) ejecutar el la terminal `npm i && npm run dev` . 
+#### 2) Como reinicio la base de datos?
+- en la terminal -> server necesitas ejecutar el siguiente comando `php spark migrate:refresh`, recordar que si reinicias la base de datos necesitas eliminar los archivos en cache
+
+#### 3) No me quiero leer todo (mucho texto), en pocas palabras que hago
+- En la base de datos crear la tabla
+- En el servidor, ejecutar `php spark migrate:refresh` y `php spark serve --port=8080`, si todo esta bien, ir al http://localhost:8080
+- En el cliente, ejecutar `npm i && npm run dev`
