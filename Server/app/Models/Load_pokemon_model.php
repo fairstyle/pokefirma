@@ -7,6 +7,7 @@ use CodeIgniter\Database\ConnectionInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Model;
 use CodeIgniter\Validation\ValidationInterface;
+use ReflectionException;
 
 class Load_pokemon_model extends Model
 {
@@ -29,7 +30,7 @@ class Load_pokemon_model extends Model
      * Verifica si existen nuevos pokemones en la API y los agrega a la base de datos
      * @param ResponseInterface $response
      * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function checkNewPokemon(ResponseInterface $response): bool
     {
@@ -95,6 +96,7 @@ class Load_pokemon_model extends Model
         if(sizeof($newPokemon) > 0) {
             $this->insertBatch($newPokemon);
             self::loadPokemonTypes($firmapi);
+            self::loadPokemonAbility($firmapi);
         }
 
         // Guardamos el nuevo conteo de pokemones en cache por 10 años xd
@@ -108,11 +110,11 @@ class Load_pokemon_model extends Model
      * Carga los tipos de pokemones en la base de datos
      * @param FirmaAPI $firmapi
      * @return void
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function loadPokemonTypes(FirmaAPI $firmapi): void
     {
-        $temp_request = $firmapi->doRequest("GET", getenv("POKEAPI_URL") . "/type");
+        $temp_request = $firmapi->doRequest("GET", getenv("POKEAPI_URL") . "/type?limit=10000");
         $dbpokemontype = json_decode($temp_request);
 
         $pokemon_type_model = new \App\Models\Pokemon\Pokemon_type_model();
@@ -141,13 +143,49 @@ class Load_pokemon_model extends Model
             $pokemon_type_model->insertPokemonTypes($newPokemonTypes);
     }
 
+    /**
+     * Carga las habilidades de los pokemones
+     * * @param FirmaAPI $firmapi
+     * * @return void
+     * * @throws ReflectionException
+ */
+    public function loadPokemonAbility(FirmaAPI $firmapi): void
+    {
+        $temp_request = $firmapi->doRequest("GET", getenv("POKEAPI_URL") . "/ability?limit=10000");
+        $dbpokemonability = json_decode($temp_request);
+
+        $pokemon_ability_model = new \App\Models\Pokemon\Pokemon_ability_model();
+        $pokemon_ability_data = $pokemon_ability_model->getPokemonAbilities();
+
+        $pokemonAbilityId = array_column($pokemon_ability_data, 'pokemonAbilityId');
+        $newPokemonAbilities = [];
+
+        foreach ($dbpokemonability->results as $pokemonability) {
+
+            $newabilityId = explode("/", $pokemonability->url);
+            $newabilityId = $newabilityId[count($newabilityId) - 2];
+
+            // Si la habilidad ya existe en la base de datos, se omite
+            if(in_array($newabilityId, $pokemonAbilityId))
+                continue;
+
+            $newPokemonAbilities[] = [
+                "pokemonAbilityId" => $newabilityId,
+                "name" => $pokemonability->name
+            ];
+        }
+
+        // Si existen nuevos tipos de habilidades, se insertan en la base de datos
+        if(sizeof($newPokemonAbilities) > 0)
+            $pokemon_ability_model->insertPokemonAbility($newPokemonAbilities);
+    }
 
     /**
      * Carga los stats de un pokemon en caso de que no existan en la base de datos y si existen los actualiza
      * @param int $pokemonId
      * @param ResponseInterface $response
      * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function loadPokemon(int $pokemonId, ResponseInterface $response): bool
     {
@@ -190,6 +228,16 @@ class Load_pokemon_model extends Model
             ];
         }, $temp_req->types);
 
+        $data_pokemon_abilitys = array_map(function($ability) use($pokemonId) {
+            $newPokemonAbilityId = explode("/", $ability->ability->url);
+            $newPokemonAbilityId = $newPokemonAbilityId[count($newPokemonAbilityId) - 2];
+            return [
+                "pokemonId" => $pokemonId,
+                "pokemonAbilityId" => $newPokemonAbilityId,
+                "isHidden" => $ability->is_hidden
+            ];
+        }, $temp_req->abilities);
+
         // Actualiza los datos del pokemon en la tabla de pokemons
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model();
         $pokemon_model->updatePokemonData($data_pokemon);
@@ -202,6 +250,50 @@ class Load_pokemon_model extends Model
         $pokemon_relation_pokemon_type_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_type_model();
         $pokemon_relation_pokemon_type_model->updatePokemonTypes($pokemonId, $data_pokemon_types);
 
+        // Actualiza las abilitys del pokemon en la tabla de relation_pokemon_ability
+        $pokemon_relation_pokemon_ability_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_ability_model();
+        $pokemon_relation_pokemon_ability_model->updatePokemonAbilities($pokemonId, $data_pokemon_abilitys);
+
+        // Cargar evoluciones (Cargar al ultimo porque remplaza la data del pokemon
+        $temp_req = $firmapi->doRequest("GET", getenv("POKEAPI_URL")."/pokemon-species/{$pokemonId}");
+        $temp_req = json_decode($temp_req);
+
+
+        // en caso de que el pokemon no exista en la api o este malo el json no carga nada
+        if($temp_req !== null) {
+            $temp_req_in = $firmapi->doRequest("GET", $temp_req->evolution_chain->url);
+            $temp_req_in = json_decode($temp_req_in);
+
+            if($temp_req_in !== null) {
+                $evolutions = self::getEvolutions($pokemonId, $temp_req_in->chain);
+                if(sizeof($evolutions) > 0) {
+                    $pokemon_relation_pokemon_evolution_model = new \App\Models\Pokemon\Pokemon_relation_pokemon_evolution_model();
+                    $pokemon_relation_pokemon_evolution_model->updatePokemonEvolution($pokemonId, $evolutions);
+                }
+            }
+        }
+
         return true;
+    }
+
+    protected function getEvolutions(int $pokemonId, $chain): array
+    {
+        $evolutions = [];
+        $current = $chain;
+
+        while ($current) {
+            $newPokemonEvolutionId = explode("/", $current->species->url);
+            $newPokemonEvolutionId = $newPokemonEvolutionId[count($newPokemonEvolutionId) - 2];
+
+            $evolutions[] = [
+                "pokemonId" => $pokemonId,
+                "pokemonEvolutionId" => $newPokemonEvolutionId,
+                "level" => $current->evolution_details[0]->min_level ?? 0,
+                "order" => sizeof($evolutions) + 1
+            ];
+            $current = $current->evolves_to[0] ?? null;
+        }
+
+        return $evolutions;
     }
 }

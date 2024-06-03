@@ -8,9 +8,9 @@ use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Model;
 use CodeIgniter\Validation\ValidationInterface;
 
-class Pokemon_relation_pokemon_type_model extends Model
+class Pokemon_relation_pokemon_ability_model extends Model
 {
-    protected $table = 'pokefirma.pokemon_relation_pokemon_type';
+    protected $table = 'pokefirma.pokemon_relation_pokemon_ability';
 
     protected $returnType = \stdClass::class;
     protected $protectFields = false;
@@ -25,39 +25,39 @@ class Pokemon_relation_pokemon_type_model extends Model
     }
 
     /**
-     * Recupera los types de un pokemon
+     * Recupera las abilities de un pokemon
      * @param int $pokemonId
      * @return array
      */
-    public function getPokemonTypes(int $pokemonId): array
+    public function getPokemonAbilities(int $pokemonId): array
     {
         return $this
-            ->select("pokefirma.pokemon_type.pokemonTypeId, name")
-            ->join("pokefirma.pokemon_type", "pokefirma.pokemon_type.pokemonTypeId = pokefirma.pokemon_relation_pokemon_type.pokemonTypeId")
+            ->select("pokefirma.pokemon_ability.pokemonAbilityId, name, isHidden")
+            ->join("pokefirma.pokemon_ability", "pokefirma.pokemon_ability.pokemonAbilityId = pokefirma.pokemon_relation_pokemon_ability.pokemonAbilityId")
             ->where("pokemonId", $pokemonId)
             ->findAll();
     }
 
     /**
-     * @param array $pokemonTypeId
+     * @param array $pokemonAbilityId
      * @return array
      */
-    public function getPokemonTypesByPokemonTypeId(array $pokemonTypeId): array
+    public function getPokemonAbilitiesByPokemonAbilityId(array $pokemonAbilityId): array
     {
         return $this
             ->select("pokemonId")
-            ->whereIn("pokemonTypeId", $pokemonTypeId)
+            ->whereIn("pokemonAbilityId", $pokemonAbilityId)
             ->findAll();
     }
 
     /**
-     * Inserta los types de un pokemon
+     * Inserta las abilities de un pokemon
      * @param int $pokemonId
      * @param array $data
      * @return bool
      * @throws \ReflectionException
      */
-    public function updatePokemonTypes(int $pokemonId, array $data): bool
+    public function updatePokemonAbilities(int $pokemonId, array $data): bool
     {
         $this->where("pokemonId", $pokemonId)->delete();
         return $this->insertBatch($data);

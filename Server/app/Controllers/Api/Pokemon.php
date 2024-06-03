@@ -28,7 +28,18 @@ class Pokemon extends BaseController
         $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
         $pokemon = $pokemon_model->getPokemon($pokemonId);
 
+        $pokemon->back = $pokemon_model->getOptsPokemon($pokemonId, "back");
+        $pokemon->next = $pokemon_model->getOptsPokemon($pokemonId);
+
         return $this->firmapi->defaultResponseOk($pokemon);
+    }
+
+    public function getCountPokemons(): ResponseInterface
+    {
+        $pokemon_model = new \App\Models\Pokemon\Pokemon_model(null, null, true, $this->response);
+        $count = $pokemon_model->getCountPokemons();
+
+        return $this->firmapi->defaultResponseOk($count);
     }
 
     /**

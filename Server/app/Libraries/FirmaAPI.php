@@ -54,7 +54,7 @@ class FirmaAPI
         ], $this->response::HTTP_BAD_REQUEST);
     }
 
-    public function defaultResponseOk(array|\stdClass $data = []): ResponseInterface
+    public function defaultResponseOk(int|array|\stdClass $data = []): ResponseInterface
     {
         return $this->response->setJSON([
             'code' => $this->response::HTTP_OK,
@@ -84,7 +84,11 @@ class FirmaAPI
             ],
         ];
 
-        return file_get_contents($url, false, stream_context_create($options));
+        try {
+            return file_get_contents($url, false, stream_context_create($options));
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function getPost(string $name): string|array|null
