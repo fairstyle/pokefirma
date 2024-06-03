@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import { PokemonInterface } from '../shared/interfaces/Pokemon.interface';
+import { PokemonChartStatsComponent } from '../components/PokemonChartStats';
+import { PokemonLeftInfoComponent } from '../components/PokemonLeftInfo';
+import { PokemonImageComponent } from '../components/PokemonImage';
 
 export const PokemonPage = () => {
     const [pokemon, setPokemon] = useState<PokemonInterface>({});
@@ -15,18 +18,23 @@ export const PokemonPage = () => {
     useEffect(() => {
         getPokemon();
     }, [])
-
-    return (<div className='h-auto min-h-screen grid grid-cols-3 px-4 pt-20'>
-        <div className=''>1</div>
-        <div className='grid grid-rows-2'>
-            <div>
-                <img 
+    
+    console.log(pokemon)
+    return (<div className='min-h-screen grid grid-cols-1 xl:grid-cols-2 px-4 pt-20 gap-x-4 gap-y-2 py-2'>
+        <div className='hidden lg:block'><PokemonLeftInfoComponent pokemon={pokemon}/></div>
+        <div className='grid grid-rows-2 border-x border-solid border-gray-200'>
+            <div className='grid place-content-center border-b border-solid boder-gray-100'>
+                <PokemonImageComponent 
                     src={pokemon.image} 
-                    alt={`Pokemon ${pokemon.name}`}
-                    className="bg-gray-100 pokemon-img hover:bg-gray-200 duration-300 hover:scale-[105%] rounded-full" />
+                    alt={`Pokemon ${pokemon.name}`} 
+                    width={150} 
+                    height={150} 
+                    classNames={`bg-gray-100 pokemon-img hover:bg-gray-200 duration-300 hover:scale-[105%] rounded-full w-auto h-auto max-w-[350px] max-h-[350px]`}/>
             </div>
-            <div>2.2</div>
+            <div>
+                <PokemonChartStatsComponent pokemon={pokemon} />
+            </div>
         </div>
-        <div className=''>3</div>
+        <div className='block lg:hidden'><PokemonLeftInfoComponent pokemon={pokemon}/></div>
     </div>)
 }

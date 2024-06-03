@@ -1,11 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { PokemonInterface } from '../../shared/interfaces/Pokemon.interface'
+import { PokemonImageComponent } from '../../components/PokemonImage'
+import { grid } from 'ldrs'
 
 export const HeaderPage = () => {
     const [flagBar, setAlterBar] = useState(false)
+    const [flagSearch, setAlterSearch] = useState(false)
+    const [flagLoadingSearch, setAlterLoadingSearch] = useState(false)
 
+    const [stringSearch, setStringSearch] = useState("")
+    const [pokemonsSearch, setPokemonsSearch] = useState(Array<PokemonInterface>)
+    
     const alterBar = () => {
         setAlterBar(!flagBar)
     }
+    
+    const findPokemon = async (name: string) => {
+        name = name.toLowerCase().replaceAll(" ", "-")
+        const response = await fetch(`${import.meta.env.VITE_POKEAPI_LOCAL_URI}/api/pokemon/${name}`)
+        const data = await response.json()
+
+        setPokemonsSearch(data.code === 200 ? data.data : [])
+        setAlterLoadingSearch(false)
+    }
+
+    const searchPokemon = (e:any) => {
+        setStringSearch(e.target.value.trim())
+    }
+
+    useEffect(() => {
+        if(stringSearch.length > 3) {
+            setAlterLoadingSearch(true)
+            setAlterSearch(true)
+            findPokemon(stringSearch)
+        } else {
+            setAlterSearch(false)
+        }
+    }, [stringSearch])
+
+    grid.register()
 
     return (<header className="bg-gray-100 px-4 py-2 drop-shadow-md fixed w-full z-30">
         <div className="flex justify-between">
@@ -15,10 +48,45 @@ export const HeaderPage = () => {
             <div className="flex space-x-4">
                 <div className="hidden md:block self-center">
                     <div>
-                        <input className="rounded-lg bg-white w-64 p-2 focus:outline-gray-300 text-gray-400" type="text" placeholder="Buscar pokemon por nombre" />
+                        <input onChange={searchPokemon} className="rounded-lg bg-white w-64 p-2 focus:outline-gray-300 text-gray-400" type="text" placeholder="Buscar pokemon por nombre" />
                     </div>
-                    <div className="relative">
-                        <div className="absolute">buscar</div>
+                    <div className={`relative ${flagSearch ? "" : "hidden"}`}>
+                        <div className="absolute bg-gray-100 w-full border border-solid border-gray-200">
+                            {
+                                flagLoadingSearch ? <div className='text-center grid justify-items-center space-y-2 py-2'>
+                                    <l-grid
+                                        size="60"
+                                        speed="1.5" 
+                                        color="gray" 
+                                    ></l-grid>
+                                    <span className='text-gray-400'>Buscando pokemones...</span>
+                                </div> : 
+                                <div className='overflow-y-auto max-h-[500px]'>
+                                    <ul className='[&>li]:p-2 [&>li:hover]:bg-gray-200'>
+                                        {pokemonsSearch.map((pokemon: PokemonInterface) => <li key={`pokemonsearch_${pokemon.pokemonId}`} className='group flex justify-between items-center'>
+                                            <a href={`/pokemon/${pokemon.pokemonId}`} className='flex space-x-2 w-full items-center'>
+                                                <PokemonImageComponent 
+                                                    src={pokemon.image} 
+                                                    alt={`Pokemon ${pokemon.name}`} 
+                                                    width={35} 
+                                                    height={35} 
+                                                    classNames={`rounded-full bg-gray-300 group-hover:scale-[120%] duration-300`}/>
+                                                    
+                                                <div>
+                                                    <span className='text-gray-500 capitalize'>{pokemon.name.replaceAll("-", " ")}</span>
+                                                    <div className='text-sm space-x-1 pt-0.5'>
+                                                        {
+                                                            pokemon.types.map((type, index) => <span key={`search_${pokemon.pokemonId}_${index}`} className={`${type.name} rounded-lg px-1 py-0.5 text-white`}>{type.name}</span>)
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </a>
+                                            <span className='text-gray-400'>#{pokemon.pokemonId}</span>
+                                        </li>)}
+                                    </ul>
+                                </div>
+                            }
+                        </div>
                     </div>
                 </div>
                 <div className="self-center hover:bg-gray-200 p-1 rounded-lg border border-dashed border-gray-300 cursor-pointer">
